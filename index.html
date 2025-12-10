@@ -86,6 +86,20 @@
       flex-direction: column;
       gap: 1.5rem;
     }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .form-field label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .helper-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
     .event-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -309,6 +323,14 @@
           <h2>Personal Records</h2>
           <p style="color: var(--muted); margin-bottom: 1.5rem;">Add each event and its PR time. Use formats like 4:30.5 or 52.13 seconds.</p>
           <form id="pr-form" novalidate>
+            <div class="form-field">
+              <label for="gender-select">Competition Category</label>
+              <select id="gender-select" name="gender">
+                <option value="men">Men</option>
+                <option value="women">Women</option>
+              </select>
+              <p class="helper-text">Choose the benchmark set that matches your racing category.</p>
+            </div>
             <div id="event-rows"></div>
             <div class="form-actions">
               <button id="add-row" type="button" class="ghost-btn">Add another event</button>
@@ -362,17 +384,32 @@
   <script>
     // Placeholder for future monetization scripts (e.g., AdSense) if dynamic loading is needed.
     const EVENT_BENCHMARKS = {
-      "100m": { best: 9.58, worst: 15.5 },
-      "200m": { best: 19.19, worst: 31 },
-      "400m": { best: 43, worst: 70 },
-      "800m": { best: 101, worst: 170 },
-      "1500m": { best: 220, worst: 360 },
-      "1600m": { best: 235, worst: 380 },
-      "Mile": { best: 223, worst: 380 },
-      "3200m": { best: 510, worst: 840 },
-      "5K": { best: 750, worst: 1200 },
-      "10K": { best: 1600, worst: 3600 }
+      men: {
+        "100m": { best: 9.58, worst: 15.5 },
+        "200m": { best: 19.19, worst: 31 },
+        "400m": { best: 43, worst: 70 },
+        "800m": { best: 101, worst: 170 },
+        "1500m": { best: 220, worst: 360 },
+        "1600m": { best: 235, worst: 380 },
+        "Mile": { best: 223, worst: 380 },
+        "3200m": { best: 510, worst: 840 },
+        "5K": { best: 750, worst: 1200 },
+        "10K": { best: 1600, worst: 3600 }
+      },
+      women: {
+        "100m": { best: 10.49, worst: 17.2 },
+        "200m": { best: 21.34, worst: 34 },
+        "400m": { best: 47.6, worst: 78 },
+        "800m": { best: 113, worst: 190 },
+        "1500m": { best: 230, worst: 390 },
+        "1600m": { best: 244, worst: 405 },
+        "Mile": { best: 242, worst: 405 },
+        "3200m": { best: 520, worst: 900 },
+        "5K": { best: 870, worst: 1350 },
+        "10K": { best: 1850, worst: 4200 }
+      }
     };
+    const EVENT_NAMES = Object.keys(EVENT_BENCHMARKS.men);
 
     const tierDescriptions = {
       "Developing": "Keep sharpening your speed and endurance—consistent training will drive this number up.",
@@ -385,6 +422,7 @@
     const eventContainer = document.getElementById("event-rows");
     const addRowButton = document.getElementById("add-row");
     const form = document.getElementById("pr-form");
+    const genderSelect = document.getElementById("gender-select");
     const resultCard = document.getElementById("result-card");
     const ratingValueEl = document.getElementById("rating-value");
     const tierLabelEl = document.getElementById("tier-label");
@@ -396,7 +434,7 @@
     let rowCounter = 0;
 
     function createEventOptions() {
-      return Object.keys(EVENT_BENCHMARKS)
+      return EVENT_NAMES
         .map(event => `<option value="${event}">${event}</option>`)
         .join("");
     }
@@ -461,8 +499,8 @@
       return Number.isNaN(straightSeconds) ? NaN : straightSeconds;
     }
 
-    function computeEventScore(eventName, seconds) {
-      const benchmarks = EVENT_BENCHMARKS[eventName];
+    function computeEventScore(eventName, seconds, genderKey) {
+      const benchmarks = EVENT_BENCHMARKS[genderKey]?.[eventName];
       if (!benchmarks) return 0;
       const clampedTime = Math.min(Math.max(seconds, benchmarks.best), benchmarks.worst);
       const raw = (100 * (benchmarks.worst - clampedTime)) / (benchmarks.worst - benchmarks.best);
@@ -509,6 +547,7 @@
     function handleCalculation(event) {
       event.preventDefault();
       const rows = eventContainer.querySelectorAll(".event-row");
+      const gender = genderSelect.value;
       const results = [];
       let hasError = false;
 
@@ -531,7 +570,7 @@
           return;
         }
 
-        const score = computeEventScore(selectEl.value, seconds);
+        const score = computeEventScore(selectEl.value, seconds, gender);
         results.push({
           event: selectEl.value,
           seconds,
@@ -555,7 +594,8 @@
       renderSummary(results);
       animateRating(finalScore);
       tierLabelEl.textContent = tier;
-      ratingNarrativeEl.textContent = narrative;
+      const categoryLabel = gender === "women" ? "Women's benchmarks applied." : "Men's benchmarks applied.";
+      ratingNarrativeEl.textContent = `${narrative} ${categoryLabel}`;
       resultCard.classList.add("visible");
       document.getElementById("results").scrollIntoView({ behavior: "smooth" });
     }
