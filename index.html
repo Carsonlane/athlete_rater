@@ -495,7 +495,7 @@
         </div>
         <div>
           <label for="${timeId}">PR Time</label>
-          <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 4 30.5" inputmode="decimal" autocomplete="off">
+            <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 4 30.5" autocomplete="off" inputmode="text" pattern="[0-9:\\s\\.-]*">
           <small class="error" aria-live="polite"></small>
         </div>
         <button type="button" class="remove-row" aria-label="Remove event">×</button>
