@@ -361,7 +361,8 @@
       <div class="container">
         <div class="card">
           <h2>Personal Records</h2>
-          <p style="color: var(--muted); margin-bottom: 1.5rem;">Add each event and its PR time. Use formats like 4:30.5 or 52.13 seconds.</p>
+          <p style="color: var(--muted); margin-bottom: 0.5rem;">Add each event and its PR time. Use formats like 4:30.5 or 52.13 seconds.</p>
+          <p class="helper-text" style="margin-bottom: 1rem;">No colon on your phone keyboard? Enter a space or dash instead: <strong>4 30.5</strong> or <strong>4-30.5</strong>.</p>
           <form id="pr-form" novalidate>
             <div class="form-field">
               <label for="gender-select">Competition Category</label>
@@ -494,7 +495,7 @@
         </div>
         <div>
           <label for="${timeId}">PR Time</label>
-          <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 52.13" inputmode="decimal" autocomplete="off">
+          <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 4 30.5" inputmode="decimal" autocomplete="off">
           <small class="error" aria-live="polite"></small>
         </div>
         <button type="button" class="remove-row" aria-label="Remove event">×</button>
@@ -519,9 +520,10 @@
       if (!value) return NaN;
       const cleaned = value.trim();
       if (!cleaned) return NaN;
+      const normalized = cleaned.replace(/[\s-]+/g, ":");
 
-      if (cleaned.includes(":")) {
-        const segments = cleaned.split(":");
+      if (normalized.includes(":")) {
+        const segments = normalized.split(":");
         let secondsPart = parseFloat(segments.pop());
         if (Number.isNaN(secondsPart)) return NaN;
         let multiplier = 60;
