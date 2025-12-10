@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Track Recruit Rating</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --accent: #2f80ed;
+      --bg: #f5f6fb;
+      --text: #0f172a;
+      --muted: #6b7280;
+      --card: #ffffff;
+      --border: #e5e7eb;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html {
+      scroll-behavior: smooth;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #ffffff, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .container {
+      width: min(1100px, 90vw);
+      margin: 0 auto;
+    }
+    header.hero {
+      padding: 4rem 0 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(47,128,237,0.12), transparent 55%);
+      pointer-events: none;
+    }
+    .hero h1 {
+      font-size: clamp(2.5rem, 5vw, 3.75rem);
+      margin-bottom: 0.8rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    .primary-btn {
+      padding: 0.95rem 2.8rem;
+      border-radius: 9999px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 15px 35px rgba(47,128,237,0.3);
+    }
+    .primary-btn:focus-visible,
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 35px rgba(47,128,237,0.35);
+    }
+    section {
+      padding: 3rem 0;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 32px;
+      padding: clamp(1.5rem, 3vw, 2.5rem);
+      box-shadow: 0 25px 60px rgba(15,23,42,0.08);
+      border: 1px solid rgba(15,23,42,0.04);
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .event-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 1rem;
+      align-items: end;
+      position: relative;
+      padding: 1.25rem;
+      border-radius: 24px;
+      background: #f8f9ff;
+      border: 1px solid var(--border);
+    }
+    .event-row label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47,128,237,0.15);
+   }
+    .error {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 0.35rem;
+      min-height: 1.1rem;
+    }
+    .remove-row {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      border: none;
+      background: transparent;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--muted);
+      padding: 0.1rem 0.4rem;
+      border-radius: 50%;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+    .remove-row:hover,
+    .remove-row:focus-visible {
+      background: rgba(15,23,42,0.08);
+      color: var(--text);
+      outline: none;
+    }
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+    .ghost-btn {
+      background: rgba(47,128,237,0.08);
+      color: var(--accent);
+      border-radius: 9999px;
+      padding: 0.85rem 1.6rem;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .ghost-btn:hover,
+    .ghost-btn:focus-visible {
+      transform: translateY(-1px);
+      outline: none;
+    }
+    .calculate-btn {
+      flex: 1;
+      min-width: 190px;
+    }
+    #results {
+      padding-top: 1rem;
+    }
+    .results-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 2.5fr) minmax(240px, 1fr);
+      gap: 1.5rem;
+      align-items: start;
+    }
+    .results-card {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .results-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .rating-value {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      margin: 0;
+    }
+    .rating-tier {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin: 0.3rem 0 1rem;
+      color: var(--accent);
+    }
+    .rating-summary {
+      margin-top: 1.3rem;
+      border-top: 1px solid rgba(15,23,42,0.07);
+      padding-top: 1.3rem;
+    }
+    .rating-summary ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+    .rating-summary li {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-weight: 500;
+    }
+    .rating-summary span {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .ad-slot {
+      border-radius: 24px;
+      border: 1.5px dashed rgba(15,23,42,0.2);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(15,23,42,0.02);
+    }
+    .ad-banner-top {
+      width: min(980px, 92vw);
+      margin: 0 auto 2rem;
+      min-height: 120px;
+    }
+    .ad-rectangle {
+      min-height: 280px;
+    }
+    footer {
+      padding: 2rem 0 3rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    footer nav {
+      margin-top: 0.8rem;
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    footer a {
+      color: inherit;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    footer a:hover {
+      color: var(--text);
+    }
+    @media (max-width: 900px) {
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+      .ad-rectangle {
+        min-height: 180px;
+      }
+    }
+    @media (max-width: 600px) {
+      .event-row {
+        grid-template-columns: 1fr;
+        padding-top: 2.2rem;
+      }
+      .remove-row {
+        top: 0.4rem;
+      }
+      .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="container hero-content">
+      <h1>Track Recruit Rating</h1>
+      <p>Enter your PRs to see how you stack up on a 0–100 scale.</p>
+      <button id="cta-button" class="primary-btn" type="button">Start Scoring</button>
+    </div>
+  </header>
+
+  <div class="ad-slot ad-banner-top" aria-label="Advertisement">
+    <!-- Ad Slot: Replace this placeholder with AdSense 728x90 script -->
+    Ad Space – 728×90
+  </div>
+
+  <main>
+    <section id="input-section">
+      <div class="container">
+        <div class="card">
+          <h2>Personal Records</h2>
+          <p style="color: var(--muted); margin-bottom: 1.5rem;">Add each event and its PR time. Use formats like 4:30.5 or 52.13 seconds.</p>
+          <form id="pr-form" novalidate>
+            <div id="event-rows"></div>
+            <div class="form-actions">
+              <button id="add-row" type="button" class="ghost-btn">Add another event</button>
+              <button type="submit" class="primary-btn calculate-btn">Calculate Rating</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="results">
+      <div class="container">
+        <div class="results-grid">
+          <div id="result-card" class="card results-card" aria-live="polite">
+            <p style="color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.8rem; margin: 0;">Overall</p>
+            <h3 class="rating-value" id="rating-value">--</h3>
+            <p class="rating-tier" id="tier-label">Awaiting Results</p>
+            <p id="rating-narrative" style="color: var(--muted); line-height: 1.5;">
+              Enter at least one valid PR to generate your Recruit Rating.
+            </p>
+            <div class="rating-summary">
+              <h4 style="margin: 0 0 0.8rem;">Event Breakdown</h4>
+              <ul id="summary-list">
+                <li>
+                  <span>No events calculated yet.</span>
+                </li>
+              </ul>
+            </div>
+            <button id="edit-prs" type="button" class="ghost-btn" style="margin-top: 1.5rem;">Edit PRs</button>
+          </div>
+          <div class="ad-slot ad-rectangle ad-rectangle-results" aria-label="Advertisement">
+            <!-- Ad Slot: Replace this placeholder with AdSense 300x250/300x600 script -->
+            Ad Space – 300×250
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>This rating is an estimate based on the times you provide and does not represent an official recruiting evaluation.</p>
+      <nav>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+        <a href="#">Privacy Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    // Placeholder for future monetization scripts (e.g., AdSense) if dynamic loading is needed.
+    const EVENT_BENCHMARKS = {
+      "100m": { best: 9.58, worst: 15.5 },
+      "200m": { best: 19.19, worst: 31 },
+      "400m": { best: 43, worst: 70 },
+      "800m": { best: 101, worst: 170 },
+      "1500m": { best: 220, worst: 360 },
+      "1600m": { best: 235, worst: 380 },
+      "Mile": { best: 223, worst: 380 },
+      "3200m": { best: 510, worst: 840 },
+      "5K": { best: 750, worst: 1200 },
+      "10K": { best: 1600, worst: 3600 }
+    };
+
+    const tierDescriptions = {
+      "Developing": "Keep sharpening your speed and endurance—consistent training will drive this number up.",
+      "Solid Contributor": "You’re on a solid path. A few more breakthroughs can move you into the elite tiers.",
+      "Strong Recruit": "College coaches will take notice—continue to diversify your events and stay healthy.",
+      "High-Impact Recruit": "You’re a difference maker. Fine-tuning technique could unlock even more performance.",
+      "Elite Prospect": "You’re operating at a national caliber. Maintain your edge with smart training and recovery."
+    };
+
+    const eventContainer = document.getElementById("event-rows");
+    const addRowButton = document.getElementById("add-row");
+    const form = document.getElementById("pr-form");
+    const resultCard = document.getElementById("result-card");
+    const ratingValueEl = document.getElementById("rating-value");
+    const tierLabelEl = document.getElementById("tier-label");
+    const ratingNarrativeEl = document.getElementById("rating-narrative");
+    const summaryListEl = document.getElementById("summary-list");
+    const editButton = document.getElementById("edit-prs");
+    const ctaButton = document.getElementById("cta-button");
+
+    let rowCounter = 0;
+
+    function createEventOptions() {
+      return Object.keys(EVENT_BENCHMARKS)
+        .map(event => `<option value="${event}">${event}</option>`)
+        .join("");
+    }
+
+    function createEventRow() {
+      rowCounter += 1;
+      const eventId = `event-${rowCounter}`;
+      const timeId = `time-${rowCounter}`;
+      const row = document.createElement("div");
+      row.className = "event-row";
+      row.innerHTML = `
+        <div>
+          <label for="${eventId}">Event</label>
+          <select id="${eventId}" name="event">
+            ${createEventOptions()}
+          </select>
+        </div>
+        <div>
+          <label for="${timeId}">PR Time</label>
+          <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 52.13" inputmode="decimal" autocomplete="off">
+          <small class="error" aria-live="polite"></small>
+        </div>
+        <button type="button" class="remove-row" aria-label="Remove event">×</button>
+      `;
+      row.querySelector(".remove-row").addEventListener("click", () => {
+        row.remove();
+        updateRemoveButtons();
+      });
+      eventContainer.appendChild(row);
+      updateRemoveButtons();
+    }
+
+    function updateRemoveButtons() {
+      const rows = eventContainer.querySelectorAll(".event-row");
+      rows.forEach(row => {
+        const btn = row.querySelector(".remove-row");
+        btn.style.display = rows.length > 1 ? "inline-flex" : "none";
+      });
+    }
+
+    function parseTimeString(value) {
+      if (!value) return NaN;
+      const cleaned = value.trim();
+      if (!cleaned) return NaN;
+
+      if (cleaned.includes(":")) {
+        const segments = cleaned.split(":");
+        let secondsPart = parseFloat(segments.pop());
+        if (Number.isNaN(secondsPart)) return NaN;
+        let multiplier = 60;
+        while (segments.length) {
+          const segment = segments.pop();
+          const parsed = parseInt(segment, 10);
+          if (Number.isNaN(parsed)) return NaN;
+          secondsPart += parsed * multiplier;
+          multiplier *= 60;
+        }
+        return secondsPart;
+      }
+
+      const straightSeconds = parseFloat(cleaned);
+      return Number.isNaN(straightSeconds) ? NaN : straightSeconds;
+    }
+
+    function computeEventScore(eventName, seconds) {
+      const benchmarks = EVENT_BENCHMARKS[eventName];
+      if (!benchmarks) return 0;
+      const clampedTime = Math.min(Math.max(seconds, benchmarks.best), benchmarks.worst);
+      const raw = (100 * (benchmarks.worst - clampedTime)) / (benchmarks.worst - benchmarks.best);
+      return Math.max(0, Math.min(100, raw));
+    }
+
+    function getTierLabel(score) {
+      if (score >= 90) return "Elite Prospect";
+      if (score >= 80) return "High-Impact Recruit";
+      if (score >= 60) return "Strong Recruit";
+      if (score >= 40) return "Solid Contributor";
+      return "Developing";
+    }
+
+    function animateRating(target) {
+      const duration = 1200;
+      const start = performance.now();
+      const initial = 0;
+
+      function frame(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = progress < 0.5
+          ? 2 * progress * progress
+          : -1 + (4 - 2 * progress) * progress;
+        const current = Math.round(initial + (target - initial) * eased);
+        ratingValueEl.textContent = `${current}/100`;
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function renderSummary(entries) {
+      summaryListEl.innerHTML = "";
+      entries.forEach(({ event, rawTime, score }) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${event}</strong><span>${rawTime} • ${score.toFixed(1)}/100</span>`;
+        summaryListEl.appendChild(li);
+      });
+    }
+
+    function handleCalculation(event) {
+      event.preventDefault();
+      const rows = eventContainer.querySelectorAll(".event-row");
+      const results = [];
+      let hasError = false;
+
+      rows.forEach(row => {
+        const selectEl = row.querySelector("select");
+        const timeEl = row.querySelector('input[name="time"]');
+        const errorEl = row.querySelector(".error");
+        errorEl.textContent = "";
+
+        if (!timeEl.value.trim()) {
+          errorEl.textContent = "Please enter a time.";
+          hasError = true;
+          return;
+        }
+
+        const seconds = parseTimeString(timeEl.value);
+        if (Number.isNaN(seconds) || seconds <= 0) {
+          errorEl.textContent = "Use mm:ss.ms or ss.ms formats.";
+          hasError = true;
+          return;
+        }
+
+        const score = computeEventScore(selectEl.value, seconds);
+        results.push({
+          event: selectEl.value,
+          seconds,
+          rawTime: timeEl.value.trim(),
+          score
+        });
+      });
+
+      if (hasError || results.length === 0) {
+        return;
+      }
+
+      const totalScore = results.reduce((sum, r) => sum + r.score, 0);
+      const averageScore = totalScore / results.length;
+      const bonus = Math.min(10, 2 * (results.length - 1));
+      const overall = Math.max(0, Math.min(100, averageScore + bonus));
+      const finalScore = Math.round(overall);
+      const tier = getTierLabel(finalScore);
+      const narrative = tierDescriptions[tier];
+
+      renderSummary(results);
+      animateRating(finalScore);
+      tierLabelEl.textContent = tier;
+      ratingNarrativeEl.textContent = narrative;
+      resultCard.classList.add("visible");
+      document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function init() {
+      createEventRow();
+      form.addEventListener("submit", handleCalculation);
+      addRowButton.addEventListener("click", () => {
+        createEventRow();
+      });
+      editButton.addEventListener("click", () => {
+        document.getElementById("input-section").scrollIntoView({ behavior: "smooth" });
+      });
+      ctaButton.addEventListener("click", () => {
+        document.getElementById("input-section").scrollIntoView({ behavior: "smooth" });
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
