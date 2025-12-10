@@ -362,7 +362,7 @@
         <div class="card">
           <h2>Personal Records</h2>
           <p style="color: var(--muted); margin-bottom: 0.5rem;">Add each event and its PR time. Use formats like 4:30.5 or 52.13 seconds.</p>
-          <p class="helper-text" style="margin-bottom: 1rem;">No colon on your phone keyboard? Enter a space or dash instead: <strong>4 30.5</strong> or <strong>4-30.5</strong>.</p>
+          <p class="helper-text" style="margin-bottom: 1rem;">Need a colon? Tap the <strong>Insert ":"</strong> button next to the field, or enter a space/dash instead (e.g., <strong>4 30.5</strong>).</p>
           <form id="pr-form" novalidate>
             <div class="form-field">
               <label for="gender-select">Competition Category</label>
@@ -495,7 +495,10 @@
         </div>
         <div>
           <label for="${timeId}">PR Time</label>
-          <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 4 30.5" inputmode="decimal" autocomplete="off">
+          <div class="time-input-group">
+            <input type="text" id="${timeId}" name="time" placeholder="4:30.5 or 4 30.5" inputmode="decimal" autocomplete="off">
+            <button type="button" class="insert-colon" data-target="${timeId}" aria-label="Insert colon">:</button>
+          </div>
           <small class="error" aria-live="polite"></small>
         </div>
         <button type="button" class="remove-row" aria-label="Remove event">×</button>
@@ -503,6 +506,9 @@
       row.querySelector(".remove-row").addEventListener("click", () => {
         row.remove();
         updateRemoveButtons();
+      });
+      row.querySelector(".insert-colon").addEventListener("click", (e) => {
+        insertColonIntoField(e.currentTarget.dataset.target);
       });
       eventContainer.appendChild(row);
       updateRemoveButtons();
@@ -513,6 +519,21 @@
       rows.forEach(row => {
         const btn = row.querySelector(".remove-row");
         btn.style.display = rows.length > 1 ? "inline-flex" : "none";
+      });
+    }
+
+    function insertColonIntoField(targetId) {
+      const input = document.getElementById(targetId);
+      if (!input) return;
+      const colonChar = ":";
+      const { selectionStart, selectionEnd, value } = input;
+      const before = value.slice(0, selectionStart ?? value.length);
+      const after = value.slice(selectionEnd ?? selectionStart ?? value.length);
+      input.value = `${before}${colonChar}${after}`;
+      const pos = (selectionStart ?? value.length) + colonChar.length;
+      requestAnimationFrame(() => {
+        input.focus();
+        input.setSelectionRange(pos, pos);
       });
     }
 
@@ -660,3 +681,27 @@
   </script>
 </body>
 </html>
+    .time-input-group {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.6rem;
+      align-items: center;
+    }
+    .insert-colon {
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0.5rem 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .insert-colon:hover,
+    .insert-colon:focus-visible {
+      background: rgba(0,0,0,0.06);
+      outline: none;
+      transform: translateY(-1px);
+    }
